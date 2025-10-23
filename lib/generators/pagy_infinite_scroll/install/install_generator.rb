@@ -29,16 +29,32 @@ module PagyInfiniteScroll
         say "\n"
         say "Next steps:", :yellow
         say "  1. Make sure you have Pagy gem installed: gem 'pagy'"
-        say "  2. Import the Stimulus controller in your JavaScript"
+        say "\n"
 
-        if using_jsbundling?
-          say "     Add to app/javascript/controllers/index.js:"
-          say "     import PagyInfiniteScrollController from 'pagy_infinite_scroll'"
-          say "     application.register('pagy-infinite-scroll', PagyInfiniteScrollController)"
+        if using_importmap?
+          say "  2. Importmap setup (already configured!):", :green
+          say "     - Pin added to config/importmap.rb"
+          say "     - Import added to app/javascript/application.js"
+          say "     - Controller auto-registers with Stimulus on page load"
+          say "     - No manual registration needed!"
+        elsif using_jsbundling?
+          say "  2. jsbundling setup:", :yellow
+          say "     Copy the controller to your app:"
+          say "       cp $(bundle show pagy_infinite_scroll)/app/assets/javascripts/pagy_infinite_scroll/infinite_scroll_controller.js app/javascript/controllers/pagy_infinite_scroll_controller.js"
+          say "\n"
+          say "     Then register in app/javascript/controllers/index.js:"
+          say "       import PagyInfiniteScrollController from './pagy_infinite_scroll_controller'"
+          say "       application.register('pagy-infinite-scroll', PagyInfiniteScrollController)"
+          say "\n"
+          say "     Finally run: yarn build (or npm run build)"
+        else
+          say "  2. Manual setup required", :yellow
+          say "     See documentation for your JavaScript setup"
         end
 
+        say "\n"
         say "  3. Use in your controllers: pagy_infinite_scroll(collection)"
-        say "  4. See documentation: https://github.com/hassanharoon86/pagy_infinite_scroll"
+        say "  4. See full documentation: https://github.com/hassanharoon86/pagy_infinite_scroll"
         say "\n"
       end
 
@@ -56,15 +72,22 @@ module PagyInfiniteScroll
       end
 
       def add_importmap_pin
+        # Pin the standalone importmap-compatible controller
         append_to_file "config/importmap.rb" do
-          "\n# Pagy Infinite Scroll\npin 'pagy_infinite_scroll', to: 'pagy_infinite_scroll/index.js'\n"
+          "\n# Pagy Infinite Scroll - Standalone controller (auto-registers with Stimulus)\npin 'pagy_infinite_scroll_controller', to: 'pagy_infinite_scroll_controller.js'\n"
         end
 
+        # Add import to application.js if it exists
         if File.exist?("app/javascript/application.js")
           append_to_file "app/javascript/application.js" do
-            "\nimport 'pagy_infinite_scroll'\n"
+            "\n// Pagy Infinite Scroll - Auto-registers with Stimulus\nimport 'pagy_infinite_scroll_controller'\n"
           end
         end
+
+        say "\n"
+        say "Importmap configuration added!", :green
+        say "The controller will auto-register with Stimulus when loaded.", :green
+        say "\n"
       end
 
       def add_jsbundling_import

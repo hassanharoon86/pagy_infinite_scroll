@@ -24,13 +24,23 @@ Then run:
 ```bash
 bundle install
 rails generate pagy_infinite_scroll:install
-yarn build  # or npm run build if using npm
 ```
 
+The generator will automatically detect your JavaScript setup and configure accordingly:
+
+### For importmap-rails (auto-configured ✅)
+The generator will:
+- Add pin to `config/importmap.rb`
+- Add import to `app/javascript/application.js`
+- Auto-register controller with Stimulus
+- **No manual steps needed!**
+
+### For jsbundling-rails (esbuild/webpack/rollup)
 The generator will:
 - Create `config/initializers/pagy_infinite_scroll.rb`
-- Copy Stimulus controller to `app/javascript/controllers/pagy_infinite_scroll_controller.js`
+- Copy controller to `app/javascript/controllers/pagy_infinite_scroll_controller.js`
 - Display registration instructions
+- Run `yarn build` after setup
 
 ## Quick Start
 
@@ -103,6 +113,8 @@ The gem cannot know:
 
 ### Solution: Extend the Controller
 
+**For jsbundling-rails apps:**
+
 Create a custom Stimulus controller that extends the gem's base controller:
 
 ```javascript
@@ -128,6 +140,28 @@ Register it in `app/javascript/controllers/index.js`:
 ```javascript
 import ProductsScrollController from "./products_scroll_controller"
 application.register("products-scroll", ProductsScrollController)
+```
+
+**For importmap-rails apps:**
+
+The controller is available globally as `window.PagyInfiniteScrollController`:
+
+```javascript
+// app/javascript/controllers/products_scroll_controller.js
+class ProductsScrollController extends window.PagyInfiniteScrollController {
+  createItemHTML(record) {
+    return `
+      <div class="product-card">
+        <h3>${record.title}</h3>
+        <p class="price">$${record.price}</p>
+        <span class="badge">${record.category}</span>
+      </div>
+    `
+  }
+}
+
+// Register with Stimulus
+Stimulus.register("products-scroll", ProductsScrollController)
 ```
 
 Use in your view:
@@ -260,12 +294,32 @@ Restart your Rails server after installing the gem.
 
 You need to create a custom controller that extends the base controller and overrides the `createItemHTML()` method (see "Custom HTML Rendering" section above).
 
+## JavaScript Setup: importmap vs jsbundling
+
+This gem works with **both** importmap-rails and jsbundling-rails:
+
+### importmap-rails ✅
+- **Setup**: Automatic via generator
+- **Controller**: Standalone file, auto-registers with Stimulus
+- **Extending**: Use `window.PagyInfiniteScrollController` as base class
+- **Advantages**: Zero build step, simpler setup
+- **File location**: Served from gem's assets
+
+### jsbundling-rails (esbuild/webpack/rollup) ✅
+- **Setup**: Manual file copy (bundlers can't access gem paths)
+- **Controller**: Import from `./pagy_infinite_scroll_controller`
+- **Extending**: Use ES6 `import` and `extends`
+- **Advantages**: Full ES6 module support, tree-shaking
+- **File location**: `app/javascript/controllers/`
+
+Both setups support the same features and API!
+
 ## Requirements
 
 - Rails 7.0+
-- Pagy gem
+- Pagy gem (add `gem 'pagy'` to your Gemfile)
 - Stimulus (Hotwire)
-- jsbundling-rails (esbuild, webpack, or rollup)
+- Either importmap-rails OR jsbundling-rails (esbuild, webpack, or rollup)
 
 ## Contributing
 

@@ -14,7 +14,19 @@ module PagyInfiniteScroll
     initializer "pagy_infinite_scroll.assets", before: :load_config_initializers do |app|
       if app.config.respond_to?(:assets)
         app.config.assets.paths << root.join("app/assets/javascripts")
-        app.config.assets.precompile += %w[pagy_infinite_scroll/infinite_scroll_controller.js pagy_infinite_scroll/index.js]
+        app.config.assets.precompile += %w[
+          pagy_infinite_scroll/infinite_scroll_controller.js
+          pagy_infinite_scroll/index.js
+          pagy_infinite_scroll_controller.js
+        ]
+      end
+    end
+
+    # Support for importmap-rails
+    initializer "pagy_infinite_scroll.importmap", before: "importmap" do |app|
+      if defined?(Importmap)
+        # Make the standalone controller available to importmap
+        app.config.assets.paths << root.join("app/assets/javascripts") unless app.config.assets.paths.include?(root.join("app/assets/javascripts"))
       end
     end
 
