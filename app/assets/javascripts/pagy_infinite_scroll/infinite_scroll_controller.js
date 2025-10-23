@@ -1,6 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
-export default class extends Controller {
+// Infinite Scroll Controller for Pagy
+// Can be used standalone or extended
+export default class PagyInfiniteScrollController extends Controller {
   static targets = ['itemsContainer', 'loadingIndicator']
   static values = {
     url: String,

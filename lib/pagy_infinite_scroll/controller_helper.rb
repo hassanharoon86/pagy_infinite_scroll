@@ -5,7 +5,14 @@ module PagyInfiniteScroll
     extend ActiveSupport::Concern
 
     included do
-      include Pagy::Backend
+      begin
+        require 'pagy'
+        include Pagy::Backend
+      rescue LoadError
+        raise LoadError, "Pagy gem is required. Add 'gem \"pagy\"' to your Gemfile and run 'bundle install'"
+      rescue NameError
+        raise NameError, "Pagy::Backend not found. Make sure Pagy is properly installed."
+      end
     end
 
     # Pagy with infinite scroll support
