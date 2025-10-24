@@ -323,7 +323,7 @@ Both setups support the same features and API!
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/hassanharoon86/pagy_infinite_scroll.
+Bug reports and pull requests are welcome on GitHub at https://github.com/hassanharoon86/pagy_infinite_scroll/issues
 
 ## License
 
