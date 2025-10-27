@@ -5,7 +5,7 @@ RSpec.describe PagyInfiniteScroll do
     expect(PagyInfiniteScroll::VERSION).not_to be nil
   end
 
-  it "does something useful" do
-    expect(false).to eq(true)
+  it "has a configuration" do
+    expect(PagyInfiniteScroll.config).to be_a(PagyInfiniteScroll::Configuration)
   end
 end
