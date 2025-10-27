@@ -229,6 +229,7 @@ PLATFORMS
 
 DEPENDENCIES
   irb
+  pagy
   pagy_infinite_scroll!
   rake (~> 13.0)
   rspec (~> 3.0)
