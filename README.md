@@ -16,7 +16,7 @@ A Rails gem that adds infinite scroll functionality using Pagy and Stimulus. Loa
 Add to your Gemfile:
 
 ```ruby
-gem 'pagy_infinite_scroll', github: 'hassanharoon86/pagy_infinite_scroll'
+gem 'pagy_infinite_scroll', '~> 0.1.1'
 ```
 
 Then run:
