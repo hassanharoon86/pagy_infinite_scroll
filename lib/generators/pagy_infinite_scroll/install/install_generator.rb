@@ -53,7 +53,19 @@ module PagyInfiniteScroll
         end
 
         say "\n"
-        say "  3. Use in your controllers: pagy_infinite_scroll(collection)"
+        say "  3. Choose your rendering approach:", :yellow
+        say "\n"
+        say "     Option A: Server-Side Rendering (Simpler - Recommended for most apps)"
+        say "       - Use format.js in controller"
+        say "       - Create .js.erb template with: <%= pagy_infinite_scroll_append '.selector', @pagy, @records %>"
+        say "       - Set data-pagy-infinite-scroll-render-mode-value='js' in view"
+        say "       - No JavaScript customization needed!"
+        say "\n"
+        say "     Option B: JSON API (Advanced - For APIs/SPAs)"
+        say "       - Use format.json in controller"
+        say "       - Create custom Stimulus controller and override createItemHTML()"
+        say "       - Full control over client-side rendering"
+        say "\n"
         say "  4. See full documentation: https://github.com/hassanharoon86/pagy_infinite_scroll"
         say "\n"
       end

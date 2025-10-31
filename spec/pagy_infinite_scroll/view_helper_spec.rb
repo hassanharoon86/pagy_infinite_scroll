@@ -123,4 +123,67 @@ RSpec.describe PagyInfiniteScroll::ViewHelper do
       expect(html).to include("<div>Item 2</div>")
     end
   end
+
+  describe "#pagy_infinite_scroll_append" do
+    let(:products) { [double(id: 1, title: "Product 1"), double(id: 2, title: "Product 2")] }
+
+    before do
+      allow(self).to receive(:render).and_return("<div>Rendered HTML</div>")
+      allow(self).to receive(:escape_javascript).and_return("Rendered HTML")
+    end
+
+    it "generates JavaScript to append items" do
+      js = pagy_infinite_scroll_append("#products", pagy_first_page, products)
+
+      expect(js).to include("document.querySelector('#products')")
+      expect(js).to include("insertAdjacentHTML('beforeend'")
+    end
+
+    it "includes escaped HTML content" do
+      js = pagy_infinite_scroll_append("#products", pagy_first_page, products)
+
+      expect(self).to have_received(:render).with(products)
+      expect(self).to have_received(:escape_javascript).with("<div>Rendered HTML</div>")
+    end
+
+    it "dispatches custom event with pagination info" do
+      js = pagy_infinite_scroll_append("#products", pagy_first_page, products)
+
+      expect(js).to include("new CustomEvent('pagy-infinite-scroll:appended'")
+      expect(js).to include("page: 1")
+      expect(js).to include("hasMore: true")
+      expect(js).to include("count: 2")
+    end
+
+    it "updates Stimulus controller values" do
+      js = pagy_infinite_scroll_append("#products", pagy_first_page, products)
+
+      expect(js).to include("scrollContainer.pagyInfiniteScroll.pageValue = 1")
+      expect(js).to include("scrollContainer.pagyInfiniteScroll.hasMoreValue = true")
+      expect(js).to include("scrollContainer.pagyInfiniteScroll.loadingValue = false")
+    end
+
+    it "supports explicit partial option" do
+      pagy_infinite_scroll_append("#products", pagy_first_page, products, partial: "products/card")
+
+      expect(self).to have_received(:render).with(partial: "products/card", collection: products, locals: {})
+    end
+
+    it "supports locals option" do
+      pagy_infinite_scroll_append("#products", pagy_first_page, products,
+        partial: "products/card", locals: { show_actions: true })
+
+      expect(self).to have_received(:render).with(
+        partial: "products/card",
+        collection: products,
+        locals: { show_actions: true }
+      )
+    end
+
+    it "returns html_safe JavaScript" do
+      js = pagy_infinite_scroll_append("#products", pagy_first_page, products)
+
+      expect(js).to be_html_safe
+    end
+  end
 end

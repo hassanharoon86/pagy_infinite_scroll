@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    pagy_infinite_scroll (0.1.0)
+    pagy_infinite_scroll (0.1.1)
       pagy (>= 6.0)
       rails (>= 7.0)
 

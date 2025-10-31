@@ -10,7 +10,8 @@ export default class PagyInfiniteScrollController extends Controller {
     loading: Boolean,
     hasMore: Boolean,
     threshold: { type: Number, default: 100 },
-    preserveState: { type: Boolean, default: true }
+    preserveState: { type: Boolean, default: true },
+    renderMode: { type: String, default: 'json' } // 'json' or 'js'
   }
 
   connect() {
@@ -19,6 +20,9 @@ export default class PagyInfiniteScrollController extends Controller {
     this.loadingValue = false
     this.boundHandleScroll = this.handleScroll.bind(this)
     this.element.addEventListener('scroll', this.boundHandleScroll)
+
+    // Make controller accessible for server-side updates
+    this.element.pagyInfiniteScroll = this
   }
 
   disconnect() {
@@ -55,9 +59,14 @@ export default class PagyInfiniteScrollController extends Controller {
         }
       })
 
+      // Determine Accept header based on render mode
+      const acceptHeader = this.renderModeValue === 'js'
+        ? 'text/javascript, application/javascript, application/ecmascript, application/x-ecmascript'
+        : 'application/json'
+
       const response = await fetch(url, {
         headers: {
-          'Accept': 'application/json',
+          'Accept': acceptHeader,
           'X-Requested-With': 'XMLHttpRequest'
         }
       })
@@ -66,32 +75,41 @@ export default class PagyInfiniteScrollController extends Controller {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const data = await response.json()
+      // Handle different response types
+      if (this.renderModeValue === 'js') {
+        // For .js.erb responses, evaluate the JavaScript
+        const jsCode = await response.text()
+        eval(jsCode)
+        // Note: State is updated by the server-rendered JS via pagy_infinite_scroll_append
+      } else {
+        // For JSON responses, use the client-side rendering
+        const data = await response.json()
 
-      // Dispatch event with data for custom handling
-      const event = this.dispatch('beforeAppend', {
-        detail: { data },
-        cancelable: true
-      })
+        // Dispatch event with data for custom handling
+        const event = this.dispatch('beforeAppend', {
+          detail: { data },
+          cancelable: true
+        })
 
-      if (!event.defaultPrevented) {
-        this.appendItems(data)
-      }
-
-      // Update pagination state
-      this.pageValue = data.pagy.page
-      this.hasMoreValue = data.pagy.next !== null
-
-      console.log(`[PagyInfiniteScroll] Loaded page ${this.pageValue}, has more: ${this.hasMoreValue}`)
-
-      // Dispatch success event
-      this.dispatch('loaded', {
-        detail: {
-          page: this.pageValue,
-          hasMore: this.hasMoreValue,
-          count: data.records.length
+        if (!event.defaultPrevented) {
+          this.appendItems(data)
         }
-      })
+
+        // Update pagination state
+        this.pageValue = data.pagy.page
+        this.hasMoreValue = data.pagy.next !== null
+
+        console.log(`[PagyInfiniteScroll] Loaded page ${this.pageValue}, has more: ${this.hasMoreValue}`)
+
+        // Dispatch success event
+        this.dispatch('loaded', {
+          detail: {
+            page: this.pageValue,
+            hasMore: this.hasMoreValue,
+            count: data.records.length
+          }
+        })
+      }
 
     } catch (error) {
       console.error('[PagyInfiniteScroll] Error loading more items:', error)

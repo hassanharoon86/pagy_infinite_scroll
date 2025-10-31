@@ -44,6 +44,19 @@ The generator will:
 
 ## Quick Start
 
+This gem provides **two approaches** for infinite scrolling:
+
+1. **Server-Side Rendering** (Simple) - HTML rendered on the server using `.js.erb` templates
+2. **JSON API** (Advanced) - JSON responses with client-side HTML rendering
+
+Choose the approach that fits your needs!
+
+---
+
+## Approach 1: Server-Side Rendering (Recommended for Simple Use Cases)
+
+This approach is simpler and requires minimal JavaScript knowledge. Perfect for standard CRUD operations.
+
 ### 1. Controller Setup
 
 Use the gem's helper methods:
@@ -51,13 +64,61 @@ Use the gem's helper methods:
 ```ruby
 class ProductsController < ApplicationController
   def index
-    # Use pagy_infinite_scroll instead of regular pagy
+    @pagy, @products = pagy_infinite_scroll(Product.all, limit: 50)
+
+    respond_to do |format|
+      format.html
+      format.js  # Responds to .js.erb template
+    end
+  end
+end
+```
+
+### 2. View Setup (HTML)
+
+```erb
+<!-- app/views/products/index.html.erb -->
+<%= infinite_scroll_container(@pagy, products_path(format: :js),
+      data: { render_mode: 'js' }) do %>
+  <%= infinite_scroll_items_container(tag: 'div', class: 'products-list') do %>
+    <%= render @products %>
+  <% end %>
+  <%= infinite_scroll_loading_indicator %>
+<% end %>
+```
+
+### 3. Create JavaScript Response Template
+
+```erb
+<!-- app/views/products/index.js.erb -->
+<%= pagy_infinite_scroll_append '.products-list', @pagy, @products %>
+```
+
+**That's it!** The gem automatically:
+- Renders your `_product.html.erb` partial for each item
+- Appends the HTML to the container
+- Updates pagination state
+- No JavaScript customization needed!
+
+---
+
+## Approach 2: JSON API (For Complex Use Cases)
+
+Use this approach when you need:
+- API reusability (mobile apps, SPAs)
+- Complex client-side logic
+- Full control over rendering
+
+### 1. Controller Setup
+
+```ruby
+class ProductsController < ApplicationController
+  def index
     @pagy, @products = pagy_infinite_scroll(Product.all, limit: 50)
 
     respond_to do |format|
       format.html
       format.json do
-        # Use the JSON helper to format response
         render json: pagy_infinite_scroll_json(@pagy, @products) { |product|
           {
             id: product.id,
@@ -73,45 +134,18 @@ end
 
 ### 2. View Setup
 
-Add the infinite scroll container to your view:
-
 ```erb
-<div data-controller="pagy-infinite-scroll"
-     data-pagy-infinite-scroll-url-value="<%= products_path(format: :json) %>"
-     data-pagy-infinite-scroll-page-value="1"
-     data-pagy-infinite-scroll-has-more-value="<%= @pagy.next.present? %>"
-     style="max-height: 600px; overflow-y: auto;">
-
-  <!-- Container for items -->
-  <div data-pagy-infinite-scroll-target="itemsContainer">
-    <% @products.each do |product| %>
-      <div class="product-card">
-        <h3><%= product.title %></h3>
-        <p><%= product.price %></p>
-      </div>
-    <% end %>
-  </div>
-
-  <!-- Loading indicator -->
-  <div data-pagy-infinite-scroll-target="loadingIndicator" class="hidden">
-    <p>Loading more...</p>
-  </div>
-</div>
+<%= infinite_scroll_container(@pagy, products_path(format: :json)) do %>
+  <%= infinite_scroll_items_container do %>
+    <%= render @products %>
+  <% end %>
+  <%= infinite_scroll_loading_indicator %>
+<% end %>
 ```
 
-## ⚠️ Important: Custom HTML Rendering
+### 3. Create Custom Stimulus Controller
 
-**The gem provides the core infinite scroll functionality, but you need to tell it how to render YOUR specific HTML.**
-
-### Why?
-
-The gem cannot know:
-- Your specific HTML structure (forms, checkboxes, badges, etc.)
-- Your CSS classes and styling
-- Your form field names
-- Your Stimulus action targets
-
-### Solution: Extend the Controller
+**For JSON API approach, you MUST override the `createItemHTML` method** to tell the gem how to render your specific HTML.
 
 **For jsbundling-rails apps:**
 
@@ -221,11 +255,12 @@ Edit `config/initializers/pagy_infinite_scroll.rb`:
 
 ```ruby
 PagyInfiniteScroll.configure do |config|
-  config.items_per_page = 50      # Items per page (default: 25)
+  config.items_per_page = 50      # Items per page (default: 50)
   config.scroll_threshold = 100   # Pixels from bottom to trigger load (default: 100)
   config.loading_indicator = true # Show loading indicator (default: true)
   config.preserve_state = true    # Preserve URL params (default: true)
   config.debounce_delay = 500     # Debounce for search in ms (default: 500)
+  config.render_mode = 'json'     # Rendering mode: 'json' or 'js' (default: 'json')
 end
 ```
 
