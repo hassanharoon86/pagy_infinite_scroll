@@ -27,6 +27,10 @@ RSpec.describe PagyInfiniteScroll::Configuration do
     it "has default debounce_delay of 500" do
       expect(config.debounce_delay).to eq(500)
     end
+
+    it "has default render_mode of 'json'" do
+      expect(config.render_mode).to eq('json')
+    end
   end
 
   describe "setters" do
@@ -58,6 +62,11 @@ RSpec.describe PagyInfiniteScroll::Configuration do
     it "allows changing debounce_delay" do
       config.debounce_delay = 1000
       expect(config.debounce_delay).to eq(1000)
+    end
+
+    it "allows changing render_mode" do
+      config.render_mode = 'js'
+      expect(config.render_mode).to eq('js')
     end
   end
 end
