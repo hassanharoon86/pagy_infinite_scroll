@@ -10,6 +10,13 @@ module PagyInfiniteScroll
     # Ensure lib files are loaded
     config.eager_load_paths << File.expand_path("../../", __FILE__)
 
+    # Ignore version.rb from Zeitwerk autoloading (it's manually required)
+    config.autoload_once_paths << File.expand_path("../", __FILE__)
+
+    initializer "pagy_infinite_scroll.ignore_version" do
+      Rails.autoloaders.main.ignore(File.expand_path("../version.rb", __FILE__))
+    end
+
     # Load assets if asset pipeline is available
     initializer "pagy_infinite_scroll.assets", before: :load_config_initializers do |app|
       if app.config.respond_to?(:assets)
