@@ -33,6 +33,7 @@ module PagyInfiniteScroll
                     pagy_infinite_scroll_page_value: pagy.page,
                     pagy_infinite_scroll_loading_value: false,
                     pagy_infinite_scroll_has_more_value: pagy.next.present?,
+                    pagy_infinite_scroll_render_mode_value: PagyInfiniteScroll.config.render_mode,
                     **stimulus_data_attributes(data_attrs)
                   } do
         block.call
