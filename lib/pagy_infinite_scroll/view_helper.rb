@@ -93,6 +93,67 @@ module PagyInfiniteScroll
       end
     end
 
+    # Server-side rendering helper for .js.erb templates
+    # This provides a simpler alternative to the JSON API approach
+    #
+    # @param container_selector [String] jQuery/CSS selector for the container
+    # @param pagy [Pagy] The pagy object
+    # @param records [ActiveRecord::Relation, Array] Records or render options
+    # @param options [Hash] Rendering options
+    # @option options [String] :partial Partial path (if not using collection inference)
+    # @option options [Hash] :locals Additional local variables for the partial
+    #
+    # @example Simple usage (auto-detects partial from collection)
+    #   <%= pagy_infinite_scroll_append "#products", @pagy, @products %>
+    #
+    # @example With explicit partial
+    #   <%= pagy_infinite_scroll_append "#products", @pagy, @products, partial: "products/card" %>
+    #
+    # @example With locals
+    #   <%= pagy_infinite_scroll_append "#items", @pagy, @items, partial: "items/row", locals: { show_actions: true } %>
+    #
+    def pagy_infinite_scroll_append(container_selector, pagy, records, options = {})
+      # Render the HTML for the records
+      html = if options[:partial]
+               render partial: options[:partial], collection: records, locals: options[:locals] || {}
+             else
+               render records
+             end
+
+      # Escape the HTML for JavaScript
+      escaped_html = escape_javascript(html)
+
+      # Generate JavaScript to append items and update pagination state
+      javascript = <<~JS
+        (function() {
+          var container = document.querySelector('#{container_selector}');
+          if (container) {
+            container.insertAdjacentHTML('beforeend', '#{escaped_html}');
+
+            // Dispatch event for custom handling
+            var event = new CustomEvent('pagy-infinite-scroll:appended', {
+              detail: {
+                page: #{pagy.page},
+                hasMore: #{pagy.next.present?},
+                count: #{records.size}
+              }
+            });
+            document.dispatchEvent(event);
+
+            // Update controller values if using Stimulus controller
+            var scrollContainer = container.closest('[data-controller~="pagy-infinite-scroll"]');
+            if (scrollContainer && scrollContainer.pagyInfiniteScroll) {
+              scrollContainer.pagyInfiniteScroll.pageValue = #{pagy.page};
+              scrollContainer.pagyInfiniteScroll.hasMoreValue = #{pagy.next.present?};
+              scrollContainer.pagyInfiniteScroll.loadingValue = false;
+            }
+          }
+        })();
+      JS
+
+      javascript.html_safe
+    end
+
     private
 
     def spinner_svg
