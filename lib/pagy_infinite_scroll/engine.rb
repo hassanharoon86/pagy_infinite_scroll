@@ -7,8 +7,9 @@ module PagyInfiniteScroll
     # Don't isolate namespace to allow helpers to load into main app
     engine_name 'pagy_infinite_scroll'
 
-    # Ensure lib files are loaded
-    config.eager_load_paths << File.expand_path("../../", __FILE__)
+    # Don't eager load lib directory - we manually require what we need
+    # This avoids Zeitwerk trying to autoload version.rb as a constant
+    config.eager_load_paths.delete(File.expand_path("../../", __FILE__))
 
     # Load assets if asset pipeline is available
     initializer "pagy_infinite_scroll.assets", before: :load_config_initializers do |app|

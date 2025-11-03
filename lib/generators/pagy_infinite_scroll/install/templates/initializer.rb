@@ -22,4 +22,12 @@ PagyInfiniteScroll.configure do |config|
   # Debounce delay for search in milliseconds
   # Default: 500
   config.debounce_delay = 500
+
+  # Default rendering mode for infinite scroll
+  # Options: 'json' (client-side rendering) or 'js' (server-side rendering with .js.erb)
+  # Default: 'json'
+  #
+  # 'json' mode: Requires custom Stimulus controller with createItemHTML() method
+  # 'js' mode: Uses server-rendered HTML via .js.erb templates (simpler, recommended for most apps)
+  config.render_mode = 'json'
 end
